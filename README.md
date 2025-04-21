@@ -1,1 +1,3 @@
-# calculator
+# Calculator
+
+Made with Chakra.ui
