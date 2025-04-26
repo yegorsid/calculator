@@ -106,9 +106,12 @@ function Calculator() {
         e.preventDefault();
         handleButton(keyMap[key]);
       } 
-      else if (e.ctrlKey || e.metaKey && key in specialMap) {
+      else if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        handleButton(specialMap[key]);
+        if (key in specialMap) {
+          handleButton(specialMap[key]);
+        }
+        return;
       }
       
       if (key === 'Enter') {
@@ -123,7 +126,7 @@ function Calculator() {
 
   return (
     <Box width="1000px" margin="24px auto">
-       <Input
+      <Input
         value={operation}
         mb={2}
         height="60px"

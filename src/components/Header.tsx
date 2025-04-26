@@ -1,17 +1,38 @@
 import { VscColorMode } from "react-icons/vsc";
 import { IoHelpCircleOutline } from "react-icons/io5";
-import { Flex, Text, IconButton, Popover, Portal } from "@chakra-ui/react";
+import { Flex, Text, IconButton, Popover, Portal, Kbd } from "@chakra-ui/react";
 import { osName } from "react-device-detect";
 import { useColorMode } from "../components/ui/color-mode"
 
-const popoverTexts = [
-  ' + P → π',
-  ' + S → sin',
-  ' + C → cos',
-  ' + T → tan',
-  ' + L → ln',
-  ' + G → log',
-  ' + Q → √'
+const hotKeys = [
+  {
+    key: 'P',
+    meaning: 'π'
+  },
+  {
+    key: 'S',
+    meaning: 'sin'
+  },
+  {
+    key: 'C',
+    meaning: 'cos'
+  },
+  {
+    key: 'T',
+    meaning: 'tan'
+  },
+  {
+    key: 'L',
+    meaning: 'ln'
+  },
+  {
+    key: 'G',
+    meaning: 'log'
+  },
+  {
+    key: 'Q',
+    meaning: '√'
+  }
 ]
 
 function Header() {
@@ -33,9 +54,9 @@ function Header() {
               <Popover.Arrow />
               <Popover.Body>
                 <Popover.Title fontWeight="600" fontSize={20}>Hot Keys</Popover.Title>
-                {popoverTexts.map((i) => {
-                  return <Text my="4" key={popoverTexts.indexOf(i)}>
-                    {osName === 'Mac OS' ? '⌘' : 'Ctrl'}{i}
+                {hotKeys.map((i) => {
+                  return <Text my="4" key={hotKeys.indexOf(i)}>
+                    {osName === 'Mac OS' ? <Kbd>⌘</Kbd> : <Kbd>Ctrl</Kbd>} + <Kbd>{i.key}</Kbd> → {i.meaning}
                   </Text>
                 })}
               </Popover.Body>
