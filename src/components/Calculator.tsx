@@ -27,13 +27,30 @@ const columns = [
     color: 'gray',
     fontSize: '24px'
   },
-]
+];
+
+const bracketFunctions = ["sin", "cos", "tan", "ln", "log", "√"];
+
+const keyMap: { [key: string]: string } = {
+  '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+  '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+  '.': '.', '+': '+', '-': '-', '*': '×', '/': '÷',
+  '^': '^', '!': '!', '(': '(', ')': ')', 
+  'Enter': '=', 'Backspace': 'DEL', 'Delete': 'DEL'
+};
+
+const specialMap: { [key: string]: string } = {
+  'p': 'π', 'e': 'e', 's': 'sin', 'c': 'cos', 
+  't': 'tan', 'l': 'ln', 'g': 'log', 'q': '√'
+};
 
 function Calculator() {
   const [operation, setOperation] = useState('')
   const [result, setResult] = useState('')
   const operationRef = useRef<HTMLInputElement>(null)
   const resultRef = useRef<HTMLInputElement>(null)
+  const openBracketsCount = useRef(0);
+  const lastFunction = useRef("");
 
   const handleFocus = (ref: React.RefObject<HTMLInputElement | null>) => {
     ref.current?.blur()
@@ -41,6 +58,8 @@ function Calculator() {
 
   const handleButton = useCallback((value: string) => {
     setOperation(prev => {
+      let newValue = prev;
+
       if (value === 'DEL') {
         if (result) {
           setOperation('');
@@ -49,11 +68,16 @@ function Calculator() {
           if (prev === 'Error' || prev === 'Negative factorial') return '' 
           return prev.slice(0, -1)
         }
-        
-      } 
-      if (value === '×') return prev + '*'
-      if (value === '÷') return prev + '/'
-      return prev + value
+      }
+
+      if (bracketFunctions.includes(value)) {
+        newValue += `${value}(`;
+        openBracketsCount.current += 1;
+        lastFunction.current = value;
+      }
+      else newValue += value;
+     
+      return newValue
     })
   }, [result])
 
@@ -64,42 +88,36 @@ function Calculator() {
 
   const calculateResult = useCallback(() => {
     try {
-      let expression = operation
-        .replace(/π/g, 'Math.PI')
-        .replace(/√/g, 'Math.sqrt(')
-        .replace(/(\d+)!/g, (_, n) => factorial(Number(n)).toString())
+      let expression = operation;
+     
+      const open = (expression.match(/\(/g) || []).length;
+      const close = (expression.match(/\)/g) || []).length;
+      const missingBrackets = open - close;
+
+      if (missingBrackets > 0) {
+        expression += ')'.repeat(missingBrackets);
+        setOperation(expression);
+      }
+
+      expression = expression
+        .replace(/π/g, Math.PI.toString())
+        .replace(/√(\d+|\(.+?\))/g, 'Math.sqrt($1)')
+        .replace(/(sin|cos|tan|ln|log)\(/g, 'Math.$1(')
         .replace(/\^/g, '**')
-        .replace(/ln\(/g, 'Math.log(')
-        .replace(/log\(/g, 'Math.log10(')
-        .replace(/(sin|cos|tan)\(/g, 'Math.$1(')
-        .replace(/e/g, 'Math.E')
-        .replace(/Math.sqrt(\d+)/g, (_, num) => `Math.sqrt(${num})`)
-      expression = expression.replace(/Math.sqrt\(([^)]+)?/g, (_, content) => 
-        content ? `Math.sqrt(${content})` : 'Math.sqrt()'
-      );
-  
-      const calcResult  = eval(expression);
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/(\d+)!/g, (_, n) => factorial(Number(n)).toString());
+
+      const calcResult = eval(expression);
       setResult(String(calcResult));
+      openBracketsCount.current = 0;
     } catch {
       setResult('Error');
     }
   }, [operation, factorial])
 
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      const keyMap: { [key: string]: string } = {
-        '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
-        '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
-        '.': '.', '+': '+', '-': '-', '*': '×', '/': '÷',
-        '^': '^', '!': '!', '(': '(', ')': ')', 
-        'Enter': '=', 'Backspace': 'DEL', 'Delete': 'DEL'
-      };
-  
-      const specialMap: { [key: string]: string } = {
-        'p': 'π', 'e': 'e', 's': 'sin', 'c': 'cos', 
-        't': 'tan', 'l': 'ln', 'g': 'log', 'q': '√'
-      };
-  
+    const handleKeyPress = (e: KeyboardEvent) => {  
       const key = e.key;
       
       if (key in keyMap) {
