@@ -100,13 +100,16 @@ function Calculator() {
       }
 
       expression = expression
-        .replace(/π/g, Math.PI.toString())
-        .replace(/√(\d+|\(.+?\))/g, 'Math.sqrt($1)')
-        .replace(/(sin|cos|tan|ln|log)\(/g, 'Math.$1(')
-        .replace(/\^/g, '**')
-        .replace(/×/g, '*')
-        .replace(/÷/g, '/')
-        .replace(/(\d+)!/g, (_, n) => factorial(Number(n)).toString());
+      .replace(/π/g, Math.PI.toString())
+      .replace(/√(\d+|\(.+?\))/g, 'Math.sqrt($1)')
+      .replace(/log\(/g, 'Math.log10(')
+      .replace(/ln\(/g, 'Math.log(')
+      .replace(/(sin|cos|tan)\(/g, 'Math.$1(')
+      .replace(/e/g, 'Math.E')
+      .replace(/\^/g, '**')
+      .replace(/×/g, '*')
+      .replace(/÷/g, '/')
+      .replace(/(\d+)!/g, (_, n) => factorial(Number(n)).toString());
 
       const calcResult = eval(expression);
       setResult(String(calcResult));
