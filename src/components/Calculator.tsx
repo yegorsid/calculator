@@ -36,7 +36,7 @@ const keyMap: { [key: string]: string } = {
   '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
   '.': '.', '+': '+', '-': '-', '*': '×', '/': '÷',
   '^': '^', '!': '!', '(': '(', ')': ')', 
-  'Enter': '=', 'Backspace': 'DEL', 'Delete': 'DEL'
+   'Backspace': 'DEL', 'Delete': 'DEL'
 };
 
 const specialMap: { [key: string]: string } = {
@@ -44,40 +44,50 @@ const specialMap: { [key: string]: string } = {
   't': 'tan', 'l': 'ln', 'g': 'log', 'q': '√'
 };
 
+function parseVirtualInput(input: string): string {
+  const mathFunctions: string[] = [];
+  let remainingInput = input;
+
+  while (remainingInput.length > 0) {
+    const matchedFunc = bracketFunctions.find(func => remainingInput.startsWith(func));
+    if (!matchedFunc) break;
+    
+    mathFunctions.push(matchedFunc);
+    remainingInput = remainingInput.slice(matchedFunc.length);
+  }
+
+  return mathFunctions.reduceRight((acc, func) => 
+    `${func}(${acc})`, 
+    remainingInput || ''
+  );
+}
+
 function Calculator() {
   const [operation, setOperation] = useState('')
   const [result, setResult] = useState('')
+  const [virtualInput, setVirtualInput] = useState('')
   const operationRef = useRef<HTMLInputElement>(null)
   const resultRef = useRef<HTMLInputElement>(null)
-  const openBracketsCount = useRef(0);
-  const lastFunction = useRef("");
 
   const handleFocus = (ref: React.RefObject<HTMLInputElement | null>) => {
     ref.current?.blur()
   }
 
   const handleButton = useCallback((value: string) => {
-    setOperation(prev => {
+    setVirtualInput(prev => {
       let newValue = prev;
 
       if (value === 'DEL') {
         if (result) {
-          setOperation('');
+          setVirtualInput('');
           setResult('');
         } else {
           if (prev === 'Error' || prev === 'Negative factorial') return '' 
           return prev.slice(0, -1)
         }
       }
-
-      if (bracketFunctions.includes(value)) {
-        newValue += `${value}(`;
-        openBracketsCount.current += 1;
-        lastFunction.current = value;
-      }
-      else newValue += value;
      
-      return newValue
+      return newValue += value
     })
   }, [result])
 
@@ -89,15 +99,6 @@ function Calculator() {
   const calculateResult = useCallback(() => {
     try {
       let expression = operation;
-     
-      const open = (expression.match(/\(/g) || []).length;
-      const close = (expression.match(/\)/g) || []).length;
-      const missingBrackets = open - close;
-
-      if (missingBrackets > 0) {
-        expression += ')'.repeat(missingBrackets);
-        setOperation(expression);
-      }
 
       expression = expression
       .replace(/π/g, Math.PI.toString())
@@ -113,7 +114,6 @@ function Calculator() {
 
       const calcResult = eval(expression);
       setResult(String(calcResult));
-      openBracketsCount.current = 0;
     } catch {
       setResult('Error');
     }
@@ -144,6 +144,15 @@ function Calculator() {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleButton, calculateResult]);
+
+  useEffect(() => {
+    if (virtualInput === '') {
+      setOperation(virtualInput)
+    } else {
+      setOperation(parseVirtualInput(virtualInput))
+    }
+    
+  }, [virtualInput]);
 
   return (
     <Box width="1000px" margin="24px auto">
