@@ -86,6 +86,11 @@ function Calculator() {
           return prev.slice(0, -1)
         }
       }
+
+      if (result) {
+        setResult('')
+        return result + value
+      }
      
       return newValue += value
     })
